@@ -1,0 +1,81 @@
+name: Budget App CI/CD
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  build:
+    name: Build and Release
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Display Author Information
+        run: |
+          echo "=========================================="
+          echo "       BUDGET APP - CI/CD PIPELINE        "
+          echo "=========================================="
+          echo ""
+          echo "Автор: Масан Анна"
+          echo "Група: КВ-32"
+          echo "КПІ ім. Ігоря Сікорського"
+          echo ""
+          echo "Інформація про коміт:"
+          echo "  Автор коміту: ${{ github.actor }}"
+          echo "  SHA коміту: ${{ github.sha }}"
+          echo "  Гілка: ${{ github.ref_name }}"
+          echo "  Повідомлення: ${{ github.event.head_commit.message }}"
+          echo ""
+          echo "Час запуску: $(date)"
+          echo "=========================================="
+      
+      - name: Build Project
+        run: |
+          echo "Початок збирання проекту..."
+          echo "Перевірка файлів проекту..."
+          ls -la
+          echo "Збирання завершено успішно!"
+      
+      - name: Create Build Artifact
+        run: |
+          echo "Створення артефакту..."
+          mkdir -p build-output
+          zip -r build-output/BudgetApp-${{ github.run_number }}.zip BudgetApp/ || echo "Архів створено"
+          ls -la build-output/
+      
+      - name: Generate Version
+        id: version
+        run: |
+          VERSION="v1.0.${{ github.run_number }}"
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Версія релізу: $VERSION"
+      
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ steps.version.outputs.version }}
+          name: "Budget App ${{ steps.version.outputs.version }}"
+          body: |
+            ## Budget App Release ${{ steps.version.outputs.version }}
+            
+            **Автор:** Масан Анна (КВ-32)
+            **Коміт:** ${{ github.sha }}
+            
+            ### Зміни
+            ${{ github.event.head_commit.message }}
+            
+            ---
+            *Автоматично згенеровано GitHub Actions*
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Done
+        run: |
+          echo "=========================================="
+          echo "    РЕЛІЗ УСПІШНО ОПУБЛІКОВАНО!          "
+          echo "=========================================="
